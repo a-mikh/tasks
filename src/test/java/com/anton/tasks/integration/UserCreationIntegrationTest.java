@@ -1,6 +1,5 @@
-package com.anton.tasks.integrational;
+package com.anton.tasks.integration;
 
-import com.anton.tasks.model.UserEntity;
 import com.anton.tasks.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
