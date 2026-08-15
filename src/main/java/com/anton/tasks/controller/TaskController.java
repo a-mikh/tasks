@@ -2,6 +2,7 @@ package com.anton.tasks.controller;
 
 import com.anton.tasks.dto.task.TaskCreateRequestDto;
 import com.anton.tasks.dto.task.TaskResponseDto;
+import com.anton.tasks.model.TaskStatus;
 import com.anton.tasks.service.TaskService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -30,7 +31,9 @@ public class TaskController {
     }
 
     @GetMapping
-    public List<TaskResponseDto> getAllTasks() {
-        return taskService.getAllTasks();
+    public List<TaskResponseDto> getAllTasks(
+            @RequestParam(required = false) TaskStatus status,
+            @RequestParam(required = false) String assignee) {
+        return taskService.getAllTasks(status, assignee);
     }
 }
