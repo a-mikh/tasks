@@ -50,7 +50,25 @@ public class TaskService {
         return new TaskResponseDto(savedTask);
     }
 
-    public List<TaskResponseDto> getAllTasks() {
+    public List<TaskResponseDto> getAllTasks(TaskStatus status, String assignee) {
+        if (status != null && assignee != null) {
+            return taskRepository.findByStatusAndAssignedUser_Username(status, assignee).stream()
+                    .map(TaskResponseDto::new)
+                    .toList();
+        }
+
+        if (status != null) {
+            return taskRepository.findByStatus(status).stream()
+                    .map(TaskResponseDto::new)
+                    .toList();
+        }
+
+        if (assignee != null) {
+            return taskRepository.findByAssignedUser_Username(assignee).stream()
+                    .map(TaskResponseDto::new)
+                    .toList();
+        }
+
         return taskRepository.findAll().stream()
                 .map(TaskResponseDto::new)
                 .toList();
