@@ -1,4 +1,4 @@
-package com.anton.tasks.integration;
+package com.anton.tasks.integration.user;
 
 import com.anton.tasks.exceptions.task.TaskNotFoundException;
 import com.anton.tasks.exceptions.user.UserNotFoundException;

@@ -12,6 +12,8 @@ import com.anton.tasks.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 public class TaskService {
     private final TaskRepository taskRepository;
@@ -46,5 +48,11 @@ public class TaskService {
         TaskEntity savedTask = taskRepository.save(task);
 
         return new TaskResponseDto(savedTask);
+    }
+
+    public List<TaskResponseDto> getAllTasks() {
+        return taskRepository.findAll().stream()
+                .map(TaskResponseDto::new)
+                .toList();
     }
 }
