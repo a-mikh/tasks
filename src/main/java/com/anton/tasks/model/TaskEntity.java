@@ -14,13 +14,17 @@ public class TaskEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TaskStatus status;
+    @ManyToOne
+    @JoinColumn(name = "assigned_user_id")
+    private UserEntity assignedUser;
 
     protected TaskEntity() {}
 
-    public TaskEntity(String title, String description, TaskStatus status) {
+    public TaskEntity(String title, String description, TaskStatus status, UserEntity assignedUser) {
         this.title = title;
         this.description = description;
         this.status = status;
+        this.assignedUser = assignedUser;
     }
 
     public Long getId() {
@@ -37,5 +41,13 @@ public class TaskEntity {
 
     public TaskStatus getStatus() {
         return status;
+    }
+
+    public UserEntity getAssignedUser() {
+        return assignedUser;
+    }
+
+    public void setAssignedUser(UserEntity assignedUser) {
+        this.assignedUser = assignedUser;
     }
 }
