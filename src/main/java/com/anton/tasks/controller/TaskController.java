@@ -7,6 +7,8 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/tasks")
 public class TaskController {
@@ -25,5 +27,10 @@ public class TaskController {
     @PutMapping("/{taskId}/assign/{username}")
     public TaskResponseDto assignUser(@PathVariable Long taskId, @PathVariable String username) {
         return taskService.assignUser(taskId, username);
+    }
+
+    @GetMapping
+    public List<TaskResponseDto> getAllTasks() {
+        return taskService.getAllTasks();
     }
 }

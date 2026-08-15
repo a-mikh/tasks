@@ -1,4 +1,4 @@
-package com.anton.tasks.integration;
+package com.anton.tasks.integration.task;
 
 import com.anton.tasks.model.TaskStatus;
 import com.anton.tasks.repository.TaskRepository;
