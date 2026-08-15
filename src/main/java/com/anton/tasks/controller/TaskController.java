@@ -1,7 +1,7 @@
 package com.anton.tasks.controller;
 
 import com.anton.tasks.dto.task.TaskCreateRequestDto;
-import com.anton.tasks.dto.task.TaskCreateResponseDto;
+import com.anton.tasks.dto.task.TaskResponseDto;
 import com.anton.tasks.service.TaskService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -18,7 +18,12 @@ public class TaskController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public TaskCreateResponseDto create(@Valid @RequestBody TaskCreateRequestDto dto) {
+    public TaskResponseDto create(@Valid @RequestBody TaskCreateRequestDto dto) {
         return taskService.create(dto);
+    }
+
+    @PutMapping("/{taskId}/assign/{username}")
+    public TaskResponseDto assignUser(@PathVariable Long taskId, @PathVariable String username) {
+        return taskService.assignUser(taskId, username);
     }
 }
