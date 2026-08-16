@@ -15,6 +15,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 import java.nio.charset.StandardCharsets;
@@ -62,8 +63,13 @@ public class TaskRetrievalIntegrationTest {
 
         String jsonResponse = mvcResult.getResponse().getContentAsString(StandardCharsets.UTF_8);
 
-        List<TaskResponseDto> tasks = objectMapper.readValue(jsonResponse, new TypeReference<>() {
-        });
+        JsonNode root = objectMapper.readTree(jsonResponse);
+
+        List<TaskResponseDto> tasks = objectMapper.convertValue(
+                root.get("content"),
+                new TypeReference<>() {
+                }
+        );
 
         assertThat(tasks).hasSize(2);
         assertThat(tasks)
@@ -89,8 +95,13 @@ public class TaskRetrievalIntegrationTest {
 
         String jsonResponse = mvcResult.getResponse().getContentAsString(StandardCharsets.UTF_8);
 
-        List<TaskResponseDto> tasks = objectMapper.readValue(jsonResponse, new TypeReference<>() {
-        });
+        JsonNode root = objectMapper.readTree(jsonResponse);
+
+        List<TaskResponseDto> tasks = objectMapper.convertValue(
+                root.get("content"),
+                new TypeReference<>() {
+                }
+        );
 
         assertThat(tasks.size()).isEqualTo(0);
     }
@@ -118,8 +129,8 @@ public class TaskRetrievalIntegrationTest {
 
         mockMvc.perform(get(String.format("/tasks?assignee=%s", username)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$[0].id").value(taskId));
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content[0].id").value(taskId));
     }
 
     @Test
@@ -156,8 +167,55 @@ public class TaskRetrievalIntegrationTest {
 
         mockMvc.perform(get(String.format("/tasks?status=%s&assignee=%s", TaskStatus.TODO, username2)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$[0].id").value(taskId2));
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content[0].id").value(taskId2));
+    }
+
+    @Test
+    void shouldReturnTwoPagesOfTasks() throws Exception {
+        createTask("test-title1");
+        createTask("test-title2");
+        createTask("test-title3");
+
+        mockMvc.perform(get("/tasks?page=0&size=2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.totalElements").value(3))
+                .andExpect(jsonPath("$.totalPages").value(2))
+                .andExpect(jsonPath("$.number").value(0))
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.size").value(2));
+
+        mockMvc.perform(get("/tasks?page=1&size=2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.totalElements").value(3))
+                .andExpect(jsonPath("$.totalPages").value(2))
+                .andExpect(jsonPath("$.number").value(1))
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.size").value(2));
+    }
+
+    @Test
+    void shouldSortTasksInAscendingOrder() throws Exception {
+        MvcResult mvcResult1 = createTask("test-title1");
+        String responseJson = mvcResult1.getResponse().getContentAsString(StandardCharsets.UTF_8);
+        Long taskId1 = JsonPath.parse(responseJson).read("$.id", Long.class);
+
+        MvcResult mvcResult2 = createTask("test-title2");
+        String responseJson2 = mvcResult2.getResponse().getContentAsString(StandardCharsets.UTF_8);
+        Long taskId2 = JsonPath.parse(responseJson2).read("$.id", Long.class);
+
+        MvcResult mvcResult3 = createTask("test-title3");
+        String responseJson3 = mvcResult3.getResponse().getContentAsString(StandardCharsets.UTF_8);
+        Long taskId3 = JsonPath.parse(responseJson3).read("$.id", Long.class);
+
+        mockMvc.perform(get("/tasks?page=0&size=3&sort=id,desc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content[0].id").value(taskId1))
+                .andExpect(jsonPath("$.content[1].id").value(taskId2))
+                .andExpect(jsonPath("$.content[2].id").value(taskId3));
     }
 
     private MvcResult createTask(String title) throws Exception {
