@@ -2,14 +2,18 @@ package com.anton.tasks.repository;
 
 import com.anton.tasks.model.TaskEntity;
 import com.anton.tasks.model.TaskStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.List;
-
 public interface TaskRepository extends JpaRepository<TaskEntity, Long> {
-    List<TaskEntity> findByStatus(TaskStatus status);
+    Page<TaskEntity> findByStatus(TaskStatus status, Pageable pageable);
 
-    List<TaskEntity> findByAssignedUser_Username(String assignee);
+    Page<TaskEntity> findByAssignedUser_Username(String assignee, Pageable pageable);
 
-    List<TaskEntity> findByStatusAndAssignedUser_Username(TaskStatus status, String assignee);
+    Page<TaskEntity> findByStatusAndAssignedUser_Username(
+            TaskStatus status,
+            String assignee,
+            Pageable pageable
+    );
 }
