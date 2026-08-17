@@ -83,4 +83,14 @@ public class TaskService {
                 .findAll(effectivePageable)
                 .map(TaskResponseDto::new);
     }
+
+    @Transactional
+    public TaskResponseDto moveToNextStatus(Long taskId) {
+        TaskEntity task = taskRepository.findById(taskId)
+                .orElseThrow(TaskNotFoundException::new);
+
+        task.moveToNextStatus();
+
+        return new TaskResponseDto(task);
+    }
 }

@@ -40,4 +40,9 @@ public class TaskController {
             @PageableDefault(size = 20) Pageable pageable) {
         return taskService.getAllTasks(status, assignee, pageable);
     }
+
+    @PatchMapping("/{id}/status/next")
+    public TaskResponseDto moveToNextStatus(@PathVariable Long id) {
+        return taskService.moveToNextStatus(id);
+    }
 }
