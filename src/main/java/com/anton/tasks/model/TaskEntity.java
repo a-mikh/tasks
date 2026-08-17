@@ -1,5 +1,6 @@
 package com.anton.tasks.model;
 
+import com.anton.tasks.exceptions.task.InvalidTaskStatusException;
 import jakarta.persistence.*;
 
 @Entity
@@ -49,5 +50,13 @@ public class TaskEntity {
 
     public void setAssignedUser(UserEntity assignedUser) {
         this.assignedUser = assignedUser;
+    }
+
+    public void moveToNextStatus() {
+        switch (this.status) {
+            case TaskStatus.TODO -> this.status = TaskStatus.IN_PROGRESS;
+            case TaskStatus.IN_PROGRESS -> this.status = TaskStatus.DONE;
+            case TaskStatus.DONE -> throw new InvalidTaskStatusException();
+        }
     }
 }
