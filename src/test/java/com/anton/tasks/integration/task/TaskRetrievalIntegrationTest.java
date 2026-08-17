@@ -1,19 +1,16 @@
 package com.anton.tasks.integration.task;
 
 import com.anton.tasks.dto.task.TaskResponseDto;
+import com.anton.tasks.integration.IntegrationTest;
 import com.anton.tasks.model.TaskStatus;
 import com.anton.tasks.repository.TaskRepository;
 import com.anton.tasks.repository.UserRepository;
 import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
@@ -28,11 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-@ActiveProfiles("test")
-@Transactional
-public class TaskRetrievalIntegrationTest {
+public class TaskRetrievalIntegrationTest extends IntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
