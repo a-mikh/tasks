@@ -1,5 +1,6 @@
 package com.anton.tasks.integration.user;
 
+import com.anton.tasks.error.ErrorCode;
 import com.anton.tasks.exceptions.task.TaskNotFoundException;
 import com.anton.tasks.exceptions.user.UserNotFoundException;
 import com.anton.tasks.integration.IntegrationTest;
@@ -63,6 +64,11 @@ public class UserAssignmentIntegrationTest extends IntegrationTest {
 
         MvcResult mvcResult = mockMvc.perform(put(formattedPath))
                 .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.code").value(ErrorCode.USER_NOT_FOUND.name()))
+                .andExpect(jsonPath("$.message").exists())
+                .andExpect(jsonPath("$.path").value(formattedPath))
+                .andExpect(jsonPath("$.fieldErrors").exists())
                 .andReturn();
 
         Throwable resolvedException = mvcResult.getResolvedException();
@@ -84,6 +90,11 @@ public class UserAssignmentIntegrationTest extends IntegrationTest {
 
         MvcResult mvcResult = mockMvc.perform(put(formattedPath))
                 .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.code").value(ErrorCode.TASK_NOT_FOUND.name()))
+                .andExpect(jsonPath("$.message").exists())
+                .andExpect(jsonPath("$.path").value(formattedPath))
+                .andExpect(jsonPath("$.fieldErrors").exists())
                 .andReturn();
 
         Throwable resolvedException = mvcResult.getResolvedException();
@@ -102,6 +113,11 @@ public class UserAssignmentIntegrationTest extends IntegrationTest {
 
         MvcResult mvcResult = mockMvc.perform(put(formattedPath))
                 .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.code").value(ErrorCode.TASK_NOT_FOUND.name()))
+                .andExpect(jsonPath("$.message").exists())
+                .andExpect(jsonPath("$.path").value(formattedPath))
+                .andExpect(jsonPath("$.fieldErrors").exists())
                 .andReturn();
 
         Throwable resolvedException = mvcResult.getResolvedException();

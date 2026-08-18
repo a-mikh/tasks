@@ -1,0 +1,10 @@
+package com.anton.tasks.error;
+
+public enum ErrorCode {
+    VALIDATION_ERROR,
+    TASK_NOT_FOUND,
+    USER_NOT_FOUND,
+    INVALID_TASK_STATUS,
+    USER_ALREADY_EXISTS,
+    INTERNAL_SERVER_ERROR
+}

@@ -43,10 +43,17 @@ public class TaskService {
     @Transactional
     public TaskResponseDto assignUser(Long taskId, String username) {
         TaskEntity task = taskRepository.findById(taskId)
-                .orElseThrow(TaskNotFoundException::new);
+                .orElseThrow(() -> new TaskNotFoundException(
+                                "Task with id %d not found.".formatted(taskId)
+                        )
+                );
 
         UserEntity assignee = userRepository.findByUsername(username)
-                .orElseThrow(UserNotFoundException::new);
+                .orElseThrow(() ->
+                        new UserNotFoundException(
+                                "User with username '%s' not found".formatted(username)
+                        )
+                );
 
         task.setAssignedUser(assignee);
         TaskEntity savedTask = taskRepository.save(task);
@@ -87,7 +94,9 @@ public class TaskService {
     @Transactional
     public TaskResponseDto moveToNextStatus(Long taskId) {
         TaskEntity task = taskRepository.findById(taskId)
-                .orElseThrow(TaskNotFoundException::new);
+                .orElseThrow(() -> new TaskNotFoundException(
+                        "Task with id %d not found.".formatted(taskId)
+                ));
 
         task.moveToNextStatus();
 
