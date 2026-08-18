@@ -1,5 +1,6 @@
 package com.anton.tasks.integration.task;
 
+import com.anton.tasks.error.ErrorCode;
 import com.anton.tasks.exceptions.task.InvalidTaskStatusException;
 import com.anton.tasks.exceptions.task.TaskNotFoundException;
 import com.anton.tasks.integration.IntegrationTest;
@@ -90,6 +91,11 @@ public class TaskStatusIntegrationTest extends IntegrationTest {
 
         MvcResult mvcResult = mockMvc.perform(patch("/tasks/" + taskId + "/status/next"))
                 .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_TASK_STATUS.name()))
+                .andExpect(jsonPath("$.message").exists())
+                .andExpect(jsonPath("$.path").value("/tasks/" + taskId + "/status/next"))
+                .andExpect(jsonPath("$.fieldErrors").exists())
                 .andReturn();
 
         assertThat(mvcResult.getResolvedException())
@@ -100,6 +106,11 @@ public class TaskStatusIntegrationTest extends IntegrationTest {
     void shouldThrowExceptionAndReturn404WhenTaskNotFound() throws Exception {
         MvcResult mvcResult = mockMvc.perform(patch("/tasks/-999/status/next"))
                 .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.code").value(ErrorCode.TASK_NOT_FOUND.name()))
+                .andExpect(jsonPath("$.message").exists())
+                .andExpect(jsonPath("$.path").value("/tasks/-999/status/next"))
+                .andExpect(jsonPath("$.fieldErrors").exists())
                 .andReturn();
 
         assertThat(mvcResult.getResolvedException())

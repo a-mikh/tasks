@@ -56,7 +56,7 @@ public class TaskEntity {
         switch (this.status) {
             case TaskStatus.TODO -> this.status = TaskStatus.IN_PROGRESS;
             case TaskStatus.IN_PROGRESS -> this.status = TaskStatus.DONE;
-            case TaskStatus.DONE -> throw new InvalidTaskStatusException();
+            case TaskStatus.DONE -> throw new InvalidTaskStatusException("Task is already DONE and cannot advance to the next status.");
         }
     }
 }

@@ -1,6 +1,7 @@
 package com.anton.tasks.integration.task;
 
 import com.anton.tasks.dto.task.TaskResponseDto;
+import com.anton.tasks.error.ErrorCode;
 import com.anton.tasks.integration.IntegrationTest;
 import com.anton.tasks.model.TaskStatus;
 import com.anton.tasks.repository.TaskRepository;
@@ -129,7 +130,12 @@ public class TaskRetrievalIntegrationTest extends IntegrationTest {
     @Test
     void shouldThrowExceptionWhenStatusIsInvalid() throws Exception {
         mockMvc.perform(get("/tasks?status=invalid"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.code").value(ErrorCode.VALIDATION_ERROR.name()))
+                .andExpect(jsonPath("$.message").exists())
+                .andExpect(jsonPath("$.path").value("/tasks"))
+                .andExpect(jsonPath("$.fieldErrors").exists());
     }
 
     @Test

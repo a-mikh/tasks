@@ -1,5 +1,6 @@
 package com.anton.tasks.integration.user;
 
+import com.anton.tasks.error.ErrorCode;
 import com.anton.tasks.integration.IntegrationTest;
 import com.anton.tasks.repository.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -51,7 +52,12 @@ public class UserCreationIntegrationTest extends IntegrationTest {
         mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(""))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.code").value(ErrorCode.VALIDATION_ERROR.name()))
+                .andExpect(jsonPath("$.message").exists())
+                .andExpect(jsonPath("$.path").value("/users"))
+                .andExpect(jsonPath("$.fieldErrors").exists());
 
         assertThat(userRepository.count()).isEqualTo(0);
     }
@@ -61,7 +67,12 @@ public class UserCreationIntegrationTest extends IntegrationTest {
         mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.code").value(ErrorCode.VALIDATION_ERROR.name()))
+                .andExpect(jsonPath("$.message").exists())
+                .andExpect(jsonPath("$.path").value("/users"))
+                .andExpect(jsonPath("$.fieldErrors").exists());
 
         assertThat(userRepository.count()).isEqualTo(0);
     }
@@ -77,7 +88,13 @@ public class UserCreationIntegrationTest extends IntegrationTest {
         mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(userRequest))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.code").value(ErrorCode.VALIDATION_ERROR.name()))
+                .andExpect(jsonPath("$.message").exists())
+                .andExpect(jsonPath("$.path").value("/users"))
+                .andExpect(jsonPath("$.fieldErrors").exists())
+                .andExpect(jsonPath("$.fieldErrors.username").exists());
 
         assertThat(userRepository.count()).isEqualTo(0);
     }
@@ -101,7 +118,12 @@ public class UserCreationIntegrationTest extends IntegrationTest {
         mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(userRequest))
-                .andExpect(status().isConflict());
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.code").value(ErrorCode.USER_ALREADY_EXISTS.name()))
+                .andExpect(jsonPath("$.message").exists())
+                .andExpect(jsonPath("$.path").value("/users"))
+                .andExpect(jsonPath("$.fieldErrors").exists());
 
         assertThat(userRepository.count()).isEqualTo(1);
     }

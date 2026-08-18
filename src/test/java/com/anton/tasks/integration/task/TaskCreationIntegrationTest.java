@@ -1,5 +1,6 @@
 package com.anton.tasks.integration.task;
 
+import com.anton.tasks.error.ErrorCode;
 import com.anton.tasks.integration.IntegrationTest;
 import com.anton.tasks.model.TaskStatus;
 import com.anton.tasks.repository.TaskRepository;
@@ -100,7 +101,12 @@ public class TaskCreationIntegrationTest extends IntegrationTest {
         mockMvc.perform(post("/tasks")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.code").value(ErrorCode.VALIDATION_ERROR.name()))
+                .andExpect(jsonPath("$.message").exists())
+                .andExpect(jsonPath("$.path").value("/tasks"))
+                .andExpect(jsonPath("$.fieldErrors").exists());
 
         assertThat(taskRepository.count()).isEqualTo(0);
     }
@@ -116,7 +122,12 @@ public class TaskCreationIntegrationTest extends IntegrationTest {
         mockMvc.perform(post("/tasks")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(userRequest))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.code").value(ErrorCode.VALIDATION_ERROR.name()))
+                .andExpect(jsonPath("$.message").exists())
+                .andExpect(jsonPath("$.path").value("/tasks"))
+                .andExpect(jsonPath("$.fieldErrors").exists());
 
         assertThat(taskRepository.count()).isEqualTo(0);
     }
