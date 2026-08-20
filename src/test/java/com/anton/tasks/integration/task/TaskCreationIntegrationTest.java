@@ -166,4 +166,47 @@ public class TaskCreationIntegrationTest extends IntegrationTest {
                     assertThat(task.getStatus()).isEqualTo(TaskStatus.TODO);
                 });
     }
+
+    @Test
+    void shouldReturn400ForTitleLongerThan255Symbols() throws Exception {
+        String title = "a".repeat(256);
+        String request = """
+                {
+                  "title": "%s"
+                }
+                """.formatted(title);
+
+        mockMvc.perform(post("/tasks")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code")
+                        .value(ErrorCode.VALIDATION_ERROR.name()))
+                .andExpect(jsonPath("$.fieldErrors.title").exists());
+
+        assertThat(taskRepository.count()).isEqualTo(0);
+    }
+
+    @Test
+    void shouldReturn400ForDescriptionLongerThan1000Symbols() throws Exception {
+        String title = "test title";
+        String description = "a".repeat(1001);
+
+        String request = """
+                {
+                  "title": "%s",
+                  "description": "%s"
+                }
+                """.formatted(title, description);
+
+        mockMvc.perform(post("/tasks")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code")
+                        .value(ErrorCode.VALIDATION_ERROR.name()))
+                .andExpect(jsonPath("$.fieldErrors.description").exists());
+
+        assertThat(taskRepository.count()).isEqualTo(0);
+    }
 }

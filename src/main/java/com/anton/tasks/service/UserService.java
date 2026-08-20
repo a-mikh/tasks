@@ -5,10 +5,14 @@ import com.anton.tasks.dto.user.UserCreateResponseDto;
 import com.anton.tasks.exceptions.user.UserAlreadyExistsException;
 import com.anton.tasks.model.UserEntity;
 import com.anton.tasks.repository.UserRepository;
+import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 @Service
 public class UserService {
+    private static final String USERNAME_UNIQUE_CONSTRAINT = "uk_users_username";
+
     private final UserRepository usersRepository;
 
     public UserService(UserRepository usersRepository) {
@@ -22,7 +26,18 @@ public class UserService {
             throw new UserAlreadyExistsException("Username " + dto.username() + " already exists");
         }
 
-        UserEntity savedUser = usersRepository.save(new UserEntity(dto.username()));
+        UserEntity savedUser;
+        try {
+            savedUser = usersRepository.saveAndFlush(new UserEntity(dto.username()));
+        } catch (DataIntegrityViolationException exception) {
+            if (exception.getCause() instanceof ConstraintViolationException constraintViolationException) {
+                String constraintName = constraintViolationException.getConstraintName();
+                if (USERNAME_UNIQUE_CONSTRAINT.equals(constraintName)) {
+                    throw new UserAlreadyExistsException("Username " + dto.username() + " already exists");
+                }
+            }
+            throw exception;
+        }
 
         return new UserCreateResponseDto(savedUser.getId(), savedUser.getUsername());
     }

@@ -127,4 +127,24 @@ public class UserCreationIntegrationTest extends IntegrationTest {
 
         assertThat(userRepository.count()).isEqualTo(1);
     }
+
+    @Test
+    void shouldReturn400ForUsernameLongerThan50Symbols() throws Exception {
+        String username = "a".repeat(51);
+        String request = """
+                {
+                  "username": "%s"
+                }
+                """.formatted(username);
+
+        mockMvc.perform(post("/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code")
+                        .value(ErrorCode.VALIDATION_ERROR.name()))
+                .andExpect(jsonPath("$.fieldErrors.username").exists());
+
+        assertThat(userRepository.count()).isEqualTo(0);
+    }
 }
