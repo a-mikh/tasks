@@ -51,8 +51,8 @@ cp .env.example .env
 2. Set database credentials in `.env`.
 
 3. Start the application:
-```bash
 
+```bash
 docker compose up --build
 ```
 The API will be available at:
@@ -60,6 +60,7 @@ The API will be available at:
 `http://localhost:8080`
 
 To stop the application:
+
 ```bash
 docker compose down
 ```

@@ -20,6 +20,6 @@ FROM amazoncorretto:25-al2023-headless
 
 WORKDIR /app
 
-COPY --from=build  /app/build/libs/app.jar app.jar
+COPY --from=build /app/build/libs/app.jar app.jar
 
 ENTRYPOINT ["java", "-jar", "app.jar"]
