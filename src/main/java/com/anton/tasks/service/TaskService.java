@@ -1,5 +1,6 @@
 package com.anton.tasks.service;
 
+import com.anton.tasks.dto.PageResponseDto;
 import com.anton.tasks.dto.task.TaskCreateRequestDto;
 import com.anton.tasks.dto.task.TaskResponseDto;
 import com.anton.tasks.exceptions.task.TaskNotFoundException;
@@ -61,34 +62,33 @@ public class TaskService {
         return new TaskResponseDto(savedTask);
     }
 
-    public Page<TaskResponseDto> getAllTasks(TaskStatus status, String assignee, Pageable pageable) {
+    public PageResponseDto<TaskResponseDto> getAllTasks(TaskStatus status, String assignee, Pageable pageable) {
         Pageable effectivePageable = PageRequest.of(
                 pageable.getPageNumber(),
                 pageable.getPageSize(),
                 Sort.by(Sort.Direction.ASC, "id")
         );
 
+        Page<TaskEntity> tasks;
+
         if (status != null && assignee != null) {
-            return taskRepository
-                    .findByStatusAndAssignedUser_Username(status, assignee, effectivePageable)
-                    .map(TaskResponseDto::new);
+            tasks = taskRepository
+                    .findByStatusAndAssignedUser_Username(status, assignee, effectivePageable);
+        } else if (status != null) {
+            tasks = taskRepository
+                    .findByStatus(status, effectivePageable);
+        } else if (assignee != null) {
+            tasks = taskRepository
+                    .findByAssignedUser_Username(assignee, effectivePageable);
+        } else {
+            tasks = taskRepository
+                    .findAll(effectivePageable);
         }
 
-        if (status != null) {
-            return taskRepository
-                    .findByStatus(status, effectivePageable)
-                    .map(TaskResponseDto::new);
-        }
+        Page<TaskResponseDto> responsePage =
+                tasks.map(TaskResponseDto::new);
 
-        if (assignee != null) {
-            return taskRepository
-                    .findByAssignedUser_Username(assignee, effectivePageable)
-                    .map(TaskResponseDto::new);
-        }
-
-        return taskRepository
-                .findAll(effectivePageable)
-                .map(TaskResponseDto::new);
+        return new PageResponseDto<>(responsePage);
     }
 
     @Transactional

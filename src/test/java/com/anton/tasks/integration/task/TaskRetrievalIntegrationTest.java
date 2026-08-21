@@ -181,7 +181,6 @@ public class TaskRetrievalIntegrationTest extends IntegrationTest {
                 .andExpect(jsonPath("$.content").isArray())
                 .andExpect(jsonPath("$.totalElements").value(3))
                 .andExpect(jsonPath("$.totalPages").value(2))
-                .andExpect(jsonPath("$.number").value(0))
                 .andExpect(jsonPath("$.content.length()").value(2))
                 .andExpect(jsonPath("$.size").value(2));
 
@@ -190,7 +189,6 @@ public class TaskRetrievalIntegrationTest extends IntegrationTest {
                 .andExpect(jsonPath("$.content").isArray())
                 .andExpect(jsonPath("$.totalElements").value(3))
                 .andExpect(jsonPath("$.totalPages").value(2))
-                .andExpect(jsonPath("$.number").value(1))
                 .andExpect(jsonPath("$.content.length()").value(1))
                 .andExpect(jsonPath("$.size").value(2));
     }
