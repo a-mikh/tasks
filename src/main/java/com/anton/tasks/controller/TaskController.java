@@ -1,17 +1,16 @@
 package com.anton.tasks.controller;
 
+import com.anton.tasks.dto.PageResponseDto;
 import com.anton.tasks.dto.task.TaskCreateRequestDto;
 import com.anton.tasks.dto.task.TaskResponseDto;
 import com.anton.tasks.model.TaskStatus;
 import com.anton.tasks.service.TaskService;
 import jakarta.validation.Valid;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
 @RestController
 @RequestMapping("/tasks")
@@ -34,7 +33,7 @@ public class TaskController {
     }
 
     @GetMapping
-    public Page<TaskResponseDto> getAllTasks(
+    public PageResponseDto<TaskResponseDto> getAllTasks(
             @RequestParam(required = false) TaskStatus status,
             @RequestParam(required = false) String assignee,
             @PageableDefault(size = 20) Pageable pageable) {

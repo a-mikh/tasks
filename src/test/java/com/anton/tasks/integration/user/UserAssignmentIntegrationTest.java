@@ -127,6 +127,31 @@ public class UserAssignmentIntegrationTest extends IntegrationTest {
         assertThat(taskRepository.count()).isZero();
     }
 
+    @Test
+    void shouldAssignUserWithUsernameWithAllAllowedSymbols() throws Exception {
+        String username = createUser("t-e.s_t26");
+
+        assertThat(userRepository.findByUsername(username)).hasValueSatisfying(user -> {
+            assertThat(user.getUsername()).isEqualTo(username);
+        });
+
+        Long taskId = createTask("test-task");
+        assertThat(taskRepository.findById(taskId)).hasValueSatisfying(task -> {
+            assertThat(task.getTitle()).isEqualTo("test-task");
+        });
+
+        String formattedPath = String.format("/tasks/%d/assign/%s", taskId, username);
+        mockMvc.perform(put(formattedPath))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(taskId))
+                .andExpect(jsonPath("$.assignee").value(username));
+
+        assertThat(taskRepository.findById(taskId)).hasValueSatisfying(task -> {
+            assertThat(task.getTitle()).isEqualTo("test-task");
+            assertThat(task.getAssignedUser().getUsername()).isEqualTo(username);
+        });
+    }
+
     private String createUser(String username) throws Exception {
         String createUserRequest = """
                 {
