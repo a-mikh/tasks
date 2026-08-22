@@ -182,7 +182,10 @@ public class TaskRetrievalIntegrationTest extends IntegrationTest {
                 .andExpect(jsonPath("$.totalElements").value(3))
                 .andExpect(jsonPath("$.totalPages").value(2))
                 .andExpect(jsonPath("$.content.length()").value(2))
-                .andExpect(jsonPath("$.size").value(2));
+                .andExpect(jsonPath("$.size").value(2))
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.first").value(true))
+                .andExpect(jsonPath("$.last").value(false));
 
         mockMvc.perform(get("/tasks?page=1&size=2"))
                 .andExpect(status().isOk())
@@ -190,7 +193,10 @@ public class TaskRetrievalIntegrationTest extends IntegrationTest {
                 .andExpect(jsonPath("$.totalElements").value(3))
                 .andExpect(jsonPath("$.totalPages").value(2))
                 .andExpect(jsonPath("$.content.length()").value(1))
-                .andExpect(jsonPath("$.size").value(2));
+                .andExpect(jsonPath("$.size").value(2))
+                .andExpect(jsonPath("$.page").value(1))
+                .andExpect(jsonPath("$.first").value(false))
+                .andExpect(jsonPath("$.last").value(true));
     }
 
     @Test
