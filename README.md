@@ -32,6 +32,13 @@ It was built as an independent Spring Boot project with a focus on business rule
 - Testcontainers
 - Docker / Docker Compose
 - GitHub Actions
+- AWS
+  - Amazon EC2
+  - Amazon RDS for PostgreSQL
+  - Amazon ECR
+  - AWS IAM
+  - AWS IAM Identity Center
+  - AWS Systems Manager
 
 ## Running Locally
 
@@ -162,9 +169,58 @@ error        centralized API error handling
 exceptions   application-specific exceptions
 ```
 
+## Deployment
+
+The application is deployed to AWS using a simple CI/CD pipeline.
+
+### Infrastructure
+
+- Amazon EC2 — runs the Dockerized Spring Boot application
+- Amazon RDS for PostgreSQL — managed PostgreSQL database
+- Amazon ECR — private Docker image registry
+- AWS Systems Manager — remote deployment execution
+- AWS IAM — instance roles and least-privilege access to AWS resources
+- GitHub OIDC — short-lived AWS credentials for GitHub Actions
+
+The RDS database is not publicly accessible. Its security group allows
+PostgreSQL traffic only from the EC2 application's security group.
+
+### CI/CD
+
+GitHub Actions runs on pull requests and pushes to `main`.
+
+Pull requests:
+
+1. Run the Gradle test suite.
+
+After a push to `main`:
+
+1. Run tests.
+2. Build a `linux/amd64` Docker image.
+3. Authenticate to AWS using GitHub OIDC.
+4. Push the image to Amazon ECR using the Git commit SHA as an immutable tag.
+5. Send a deployment command to EC2 through AWS Systems Manager.
+6. EC2 pulls the exact image from ECR and starts the application.
+7. The deployment script waits until the API responds successfully before reporting success.
+
+No long-lived AWS access keys are stored in GitHub.
+
+### Deployment flow
+
+```text
+GitHub
+→ GitHub Actions
+→ Amazon ECR
+→ AWS Systems Manager
+→ Amazon EC2
+→ Spring Boot
+→ Amazon RDS PostgreSQL
+```
+
 ## Future Improvements
 
 - Add OpenAPI / Swagger documentation
-- Add optimistic locking for concurrent task updates
-- Introduce authentication and authorization if the application scope requires it
-- Add custom pagination response DTO instead of exposing Spring `Page`
+- Add a dedicated application health endpoint
+- Move runtime secrets to AWS Secrets Manager or Parameter Store
+- Add HTTPS and a domain name
+- Improve deployment rollback / zero-downtime deployment
