@@ -102,4 +102,13 @@ public class TaskService {
 
         return new TaskResponseDto(task);
     }
+
+    public TaskResponseDto getTaskById(Long taskId) {
+        TaskEntity task = taskRepository.findById(taskId)
+                .orElseThrow(
+                        () -> new TaskNotFoundException("Task with id %d not found.".formatted(taskId))
+                );
+
+        return new TaskResponseDto(task);
+    }
 }

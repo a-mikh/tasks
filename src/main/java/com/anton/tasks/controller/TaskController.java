@@ -44,4 +44,9 @@ public class TaskController {
     public TaskResponseDto moveToNextStatus(@PathVariable Long id) {
         return taskService.moveToNextStatus(id);
     }
+
+    @GetMapping("/{id}")
+    public TaskResponseDto getTaskById(@PathVariable Long id) {
+        return taskService.getTaskById(id);
+    }
 }

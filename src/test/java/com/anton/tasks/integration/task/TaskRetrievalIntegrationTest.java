@@ -2,6 +2,7 @@ package com.anton.tasks.integration.task;
 
 import com.anton.tasks.dto.task.TaskResponseDto;
 import com.anton.tasks.error.ErrorCode;
+import com.anton.tasks.exceptions.task.TaskNotFoundException;
 import com.anton.tasks.integration.IntegrationTest;
 import com.anton.tasks.model.TaskStatus;
 import com.anton.tasks.repository.TaskRepository;
@@ -20,6 +21,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -219,6 +222,37 @@ public class TaskRetrievalIntegrationTest extends IntegrationTest {
                 .andExpect(jsonPath("$.content[0].id").value(taskId1))
                 .andExpect(jsonPath("$.content[1].id").value(taskId2))
                 .andExpect(jsonPath("$.content[2].id").value(taskId3));
+    }
+
+    @Test
+    void shouldReturnTaskById() throws Exception {
+        MvcResult mvcResult = createTask("test-title");
+        String responseJson = mvcResult.getResponse().getContentAsString(StandardCharsets.UTF_8);
+        Long taskId = JsonPath.parse(responseJson).read("$.id", Long.class);
+
+        mockMvc.perform(get("/tasks/" + taskId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(taskId))
+                .andExpect(jsonPath("$.title").value("test-title"))
+                .andExpect(jsonPath("$.description").isEmpty())
+                .andExpect(jsonPath("$.status").value(TaskStatus.TODO.name()))
+                .andExpect(jsonPath("$.assignee").isEmpty());
+    }
+
+    @Test
+    void shouldReturn404WhenTaskByIdNotFound() throws Exception {
+        MvcResult mvcResult = mockMvc.perform(get("/tasks/-999"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.code").value(ErrorCode.TASK_NOT_FOUND.name()))
+                .andExpect(jsonPath("$.path").value("/tasks/-999"))
+                .andExpect(jsonPath("$.fieldErrors").isEmpty())
+                .andReturn();
+
+        Throwable resolvedException = mvcResult.getResolvedException();
+        assertNotNull(resolvedException);
+        assertInstanceOf(TaskNotFoundException.class, resolvedException);
+        assertThat(resolvedException.getMessage()).isEqualTo("Task with id -999 not found.");
     }
 
     private MvcResult createTask(String title) throws Exception {
