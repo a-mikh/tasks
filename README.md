@@ -6,6 +6,8 @@ Tasks API is a backend service for managing users and tasks.
 The project supports task creation, assignment, status transitions, filtering and pagination.
 It was built as an independent Spring Boot project with a focus on business rules, API design, persistence, testing and reproducible local development.
 
+Frontend repository: [a-mikh/tasks-front](https://github.com/a-mikh/tasks-front)
+
 ## Features
 
 - Create users with unique usernames
@@ -55,6 +57,7 @@ cp .env.example .env
 ```bash
 docker compose up --build
 ```
+
 The API will be available at:
 
 `http://localhost:8080`
@@ -66,9 +69,23 @@ docker compose down
 ```
 
 To stop the application and remove the PostgreSQL data volume:
+
 ```bash
 docker compose down -v
 ```
+
+### Start the frontend
+
+With the backend running, start the Angular application in a separate terminal:
+
+```bash
+git clone https://github.com/a-mikh/tasks-front.git
+cd tasks-front
+npm ci
+npm start
+```
+
+Open `http://localhost:4200` in a browser. The Angular development server forwards API requests to `http://localhost:8080` through its development proxy, so the backend does not require CORS configuration for this local setup.
 
 ## Configuration
 
@@ -86,12 +103,13 @@ Use `.env.example` as the template. The real `.env` file is not committed to Git
 ## API Overview
 
 | Method | Endpoint                            | Description                                |
-|--------|-------------------------------------|--------------------------------------------|
+| ------ | ----------------------------------- | ------------------------------------------ |
 | POST   | `/users`                            | Create a user                              |
 | POST   | `/tasks`                            | Create a task                              |
 | PUT    | `/tasks/{taskId}/assign/{username}` | Assign or reassign a user                  |
 | PATCH  | `/tasks/{id}/status/next`           | Advance task status                        |
 | GET    | `/tasks`                            | Retrieve tasks with pagination and filters |
+| GET    | `/tasks/{id}`                       | Retrieve one task                          |
 
 Supported filters for `GET /tasks`:
 
@@ -116,6 +134,7 @@ Example:
 ```
 
 Validation errors include field-specific details:
+
 ```json
 {
   "status": 400,
@@ -127,6 +146,7 @@ Validation errors include field-specific details:
   }
 }
 ```
+
 ## Testing
 
 Run the complete test suite with:
@@ -167,4 +187,3 @@ exceptions   application-specific exceptions
 - Add OpenAPI / Swagger documentation
 - Add optimistic locking for concurrent task updates
 - Introduce authentication and authorization if the application scope requires it
-- Add custom pagination response DTO instead of exposing Spring `Page`
