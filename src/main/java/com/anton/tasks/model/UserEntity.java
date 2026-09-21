@@ -10,12 +10,19 @@ public class UserEntity {
     private Long id;
     @Column(nullable = false, unique = true, length = 50)
     private String username;
+    @Column(name = "password_hash")
+    private String passwordHash;
 
     protected UserEntity() {
     }
 
     public UserEntity(String userName) {
         this.username = userName;
+    }
+
+    public UserEntity(String username, String passwordHash) {
+        this.username = username;
+        this.passwordHash = passwordHash;
     }
 
     public Long getId() {
@@ -26,4 +33,7 @@ public class UserEntity {
         return username;
     }
 
+    public String getPasswordHash() {
+        return passwordHash;
+    }
 }
