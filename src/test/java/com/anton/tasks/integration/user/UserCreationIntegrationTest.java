@@ -13,6 +13,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import java.nio.charset.StandardCharsets;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -28,14 +29,16 @@ public class UserCreationIntegrationTest extends IntegrationTest {
 
     @Test
     void shouldCreateUser() throws Exception {
-        String username = "test";
+        String username = "test-user";
+        String password = "test-password";
         String userRequest = """
                 {
-                  "username": "%s"
+                  "username": "%s",
+                  "password": "%s"
                 }
-                """.formatted(username);
+                """.formatted(username, password);
 
-        mockMvc.perform(post("/users")
+        mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(userRequest))
                 .andExpect(status().isCreated())
@@ -53,14 +56,14 @@ public class UserCreationIntegrationTest extends IntegrationTest {
 
     @Test
     void shouldReturn400ForUserWithEmptyBody() throws Exception {
-        mockMvc.perform(post("/users")
+        mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(""))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.code").value(ErrorCode.VALIDATION_ERROR.name()))
                 .andExpect(jsonPath("$.message").exists())
-                .andExpect(jsonPath("$.path").value("/users"))
+                .andExpect(jsonPath("$.path").value("/auth/register"))
                 .andExpect(jsonPath("$.fieldErrors").exists());
 
         assertThat(userRepository.count()).isEqualTo(0);
@@ -68,35 +71,44 @@ public class UserCreationIntegrationTest extends IntegrationTest {
 
     @Test
     void shouldReturn400ForUserWithoutUsername() throws Exception {
-        mockMvc.perform(post("/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{}"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.code").value(ErrorCode.VALIDATION_ERROR.name()))
-                .andExpect(jsonPath("$.message").exists())
-                .andExpect(jsonPath("$.path").value("/users"))
-                .andExpect(jsonPath("$.fieldErrors").exists());
-
-        assertThat(userRepository.count()).isEqualTo(0);
-    }
-
-    @Test
-    void shouldReturn400ForUserWithBlankUsername() throws Exception {
+        String password = "test-password";
         String userRequest = """
-                        {
-                          "username": "     "
-                        }
-                """;
+                {
+                  "password": "%s"
+                }
+                """.formatted(password);
 
-        mockMvc.perform(post("/users")
+        mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(userRequest))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.code").value(ErrorCode.VALIDATION_ERROR.name()))
                 .andExpect(jsonPath("$.message").exists())
-                .andExpect(jsonPath("$.path").value("/users"))
+                .andExpect(jsonPath("$.path").value("/auth/register"))
+                .andExpect(jsonPath("$.fieldErrors.username").exists());
+
+        assertThat(userRepository.count()).isEqualTo(0);
+    }
+
+    @Test
+    void shouldReturn400ForUserWithBlankUsername() throws Exception {
+        String password = "test-password";
+        String userRequest = """
+                        {
+                          "username": "     ",
+                          "password": "%s"
+                        }
+                """.formatted(password);
+
+        mockMvc.perform(post("/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(userRequest))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.code").value(ErrorCode.VALIDATION_ERROR.name()))
+                .andExpect(jsonPath("$.message").exists())
+                .andExpect(jsonPath("$.path").value("/auth/register"))
                 .andExpect(jsonPath("$.fieldErrors").exists())
                 .andExpect(jsonPath("$.fieldErrors.username").exists());
 
@@ -106,27 +118,29 @@ public class UserCreationIntegrationTest extends IntegrationTest {
     @Test
     void shouldReturn409ForUserWithDuplicateUsername() throws Exception {
         String username = "test";
+        String password = "test-password";
         String userRequest = """
                             {
-                              "username": "%s"
+                              "username": "%s",
+                              "password": "%s"
                             }
-                """.formatted(username);
+                """.formatted(username,  password);
 
-        mockMvc.perform(post("/users")
+        mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(userRequest))
                 .andExpect(status().isCreated());
 
         assertThat(userRepository.count()).isEqualTo(1);
 
-        mockMvc.perform(post("/users")
+        mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(userRequest))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.status").value(409))
                 .andExpect(jsonPath("$.code").value(ErrorCode.USER_ALREADY_EXISTS.name()))
                 .andExpect(jsonPath("$.message").exists())
-                .andExpect(jsonPath("$.path").value("/users"))
+                .andExpect(jsonPath("$.path").value("/auth/register"))
                 .andExpect(jsonPath("$.fieldErrors").exists());
 
         assertThat(userRepository.count()).isEqualTo(1);
@@ -135,13 +149,15 @@ public class UserCreationIntegrationTest extends IntegrationTest {
     @Test
     void shouldReturn400ForUsernameLongerThan50Symbols() throws Exception {
         String username = "a".repeat(51);
+        String password = "test-password";
         String request = """
                 {
-                  "username": "%s"
+                  "username": "%s",
+                  "password": "%s"
                 }
-                """.formatted(username);
+                """.formatted(username, password);
 
-        mockMvc.perform(post("/users")
+        mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isBadRequest())
@@ -155,13 +171,15 @@ public class UserCreationIntegrationTest extends IntegrationTest {
     @Test
     void shouldCreateUserWithUsernameWithAllowedSymbols() throws Exception {
         String username = "t-e.s_t26";
+        String password = "test-password";
         String request = """
                 {
-                  "username": "%s"
+                  "username": "%s",
+                  "password": "%s"
                 }
-                """.formatted(username);
+                """.formatted(username, password);
 
-        MvcResult mvcResult = mockMvc.perform(post("/users")
+        MvcResult mvcResult = mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isCreated())
@@ -206,20 +224,22 @@ public class UserCreationIntegrationTest extends IntegrationTest {
     }
 
     private void checkUsername(String username) throws Exception {
+        String password = "test-password";
         String request = """
                 {
-                  "username": "%s"
+                  "username": "%s",
+                  "password": "%s"
                 }
-                """.formatted(username);
+                """.formatted(username, password);
 
-        mockMvc.perform(post("/users")
+        mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.code").value(ErrorCode.VALIDATION_ERROR.name()))
                 .andExpect(jsonPath("$.fieldErrors.username").exists())
-                .andReturn();
+                .andExpect(jsonPath("$.path").value("/auth/register"));
 
         assertThat(userRepository.count()).isEqualTo(0);
     }

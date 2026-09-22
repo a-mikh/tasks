@@ -16,6 +16,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import java.nio.charset.StandardCharsets;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -35,7 +36,7 @@ public class TaskStatusIntegrationTest extends IntegrationTest {
 
         assertThat(taskRepository.findById(taskId)).isPresent();
 
-        mockMvc.perform(patch("/tasks/" + taskId + "/status/next"))
+        mockMvc.perform(patch("/tasks/" + taskId + "/status/next").with(jwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(taskId))
                 .andExpect(jsonPath("$.title").value("test-title1"))
@@ -53,13 +54,13 @@ public class TaskStatusIntegrationTest extends IntegrationTest {
 
         assertThat(taskRepository.findById(taskId)).isPresent();
 
-        mockMvc.perform(patch("/tasks/" + taskId + "/status/next"))
+        mockMvc.perform(patch("/tasks/" + taskId + "/status/next").with(jwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(taskId))
                 .andExpect(jsonPath("$.title").value("test-title1"))
                 .andExpect(jsonPath("$.status").value(TaskStatus.IN_PROGRESS.name()));
 
-        mockMvc.perform(patch("/tasks/" + taskId + "/status/next"))
+        mockMvc.perform(patch("/tasks/" + taskId + "/status/next").with(jwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(taskId))
                 .andExpect(jsonPath("$.title").value("test-title1"))
@@ -77,19 +78,19 @@ public class TaskStatusIntegrationTest extends IntegrationTest {
 
         assertThat(taskRepository.findById(taskId)).isPresent();
 
-        mockMvc.perform(patch("/tasks/" + taskId + "/status/next"))
+        mockMvc.perform(patch("/tasks/" + taskId + "/status/next").with(jwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(taskId))
                 .andExpect(jsonPath("$.title").value("test-title1"))
                 .andExpect(jsonPath("$.status").value(TaskStatus.IN_PROGRESS.name()));
 
-        mockMvc.perform(patch("/tasks/" + taskId + "/status/next"))
+        mockMvc.perform(patch("/tasks/" + taskId + "/status/next").with(jwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(taskId))
                 .andExpect(jsonPath("$.title").value("test-title1"))
                 .andExpect(jsonPath("$.status").value(TaskStatus.DONE.name()));
 
-        MvcResult mvcResult = mockMvc.perform(patch("/tasks/" + taskId + "/status/next"))
+        MvcResult mvcResult = mockMvc.perform(patch("/tasks/" + taskId + "/status/next").with(jwt()))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.status").value(409))
                 .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_TASK_STATUS.name()))
@@ -104,7 +105,7 @@ public class TaskStatusIntegrationTest extends IntegrationTest {
 
     @Test
     void shouldThrowExceptionAndReturn404WhenTaskNotFound() throws Exception {
-        MvcResult mvcResult = mockMvc.perform(patch("/tasks/-999/status/next"))
+        MvcResult mvcResult = mockMvc.perform(patch("/tasks/-999/status/next").with(jwt()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
                 .andExpect(jsonPath("$.code").value(ErrorCode.TASK_NOT_FOUND.name()))
@@ -124,7 +125,7 @@ public class TaskStatusIntegrationTest extends IntegrationTest {
                 }
                 """.formatted(title);
 
-        MvcResult mvcResult = mockMvc.perform(post("/tasks")
+        MvcResult mvcResult = mockMvc.perform(post("/tasks").with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(taskRequest))
                 .andExpect(status().isCreated())

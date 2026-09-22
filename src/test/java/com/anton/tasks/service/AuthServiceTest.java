@@ -1,6 +1,6 @@
 package com.anton.tasks.service;
 
-import com.anton.tasks.dto.user.UserCreateRequestDto;
+import com.anton.tasks.dto.auth.UserRegisterRequestDto;
 import com.anton.tasks.exceptions.user.UserAlreadyExistsException;
 import com.anton.tasks.model.UserEntity;
 import com.anton.tasks.repository.UserRepository;
@@ -8,6 +8,8 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
 
 import java.sql.SQLException;
 
@@ -17,21 +19,28 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class UserServiceTest {
+public class AuthServiceTest {
+    private final String PASSWORD_HASH = "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=";
 
     private UserRepository userRepository;
-    private UserService userService;
+    private AuthService authService;
+    private PasswordEncoder passwordEncoder;
+    private JwtEncoder jwtEncoder;
 
     @BeforeEach
-    void setUp() {
+    void setup() {
         userRepository = mock(UserRepository.class);
-        userService = new UserService(userRepository);
+        passwordEncoder = mock(PasswordEncoder.class);
+        jwtEncoder = mock(JwtEncoder.class);
+        authService = new AuthService(userRepository, passwordEncoder, jwtEncoder);
     }
 
     @Test
     void shouldTranslateUsernameConstraintViolationToUserAlreadyExistsException() {
-        UserCreateRequestDto userCreateRequestDto = new UserCreateRequestDto("duplicate");
+        UserRegisterRequestDto userRegisterRequestDto =
+                new UserRegisterRequestDto("duplicate", "test-password");
 
+        when(passwordEncoder.encode(any())).thenReturn(PASSWORD_HASH);
         when(userRepository.existsByUsername("duplicate")).thenReturn(false);
 
         ConstraintViolationException constraintViolation =
@@ -50,14 +59,16 @@ class UserServiceTest {
         when(userRepository.saveAndFlush(any(UserEntity.class))).thenThrow(dataIntegrityViolation);
 
         assertThrows(UserAlreadyExistsException.class, () -> {
-            userService.createUser(userCreateRequestDto);
+            authService.registerUser(userRegisterRequestDto);
         });
     }
 
     @Test
     void shouldRethrowDataIntegrityViolationForDifferentConstraint() {
-        UserCreateRequestDto userCreateRequestDto = new UserCreateRequestDto("duplicate");
+        UserRegisterRequestDto userRegisterRequestDto =
+                new UserRegisterRequestDto("duplicate", "test-password");
 
+        when(passwordEncoder.encode(any())).thenReturn(PASSWORD_HASH);
         when(userRepository.existsByUsername("duplicate")).thenReturn(false);
 
         ConstraintViolationException constraintViolation =
@@ -78,7 +89,7 @@ class UserServiceTest {
 
         DataIntegrityViolationException thrown = assertThrows(
                 DataIntegrityViolationException.class,
-                () -> userService.createUser(userCreateRequestDto)
+                () -> authService.registerUser(userRegisterRequestDto)
         );
 
         assertSame(dataIntegrityViolation, thrown);
