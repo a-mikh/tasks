@@ -1,6 +1,7 @@
 package com.anton.tasks.error;
 
 import com.anton.tasks.dto.error.ErrorResponseDto;
+import com.anton.tasks.exceptions.auth.InvalidCredentialsException;
 import com.anton.tasks.exceptions.task.InvalidTaskStatusException;
 import com.anton.tasks.exceptions.task.TaskNotFoundException;
 import com.anton.tasks.exceptions.user.UserAlreadyExistsException;
@@ -187,6 +188,20 @@ public class GlobalExceptionHandler {
                 HttpStatus.UNSUPPORTED_MEDIA_TYPE,
                 ErrorCode.UNSUPPORTED_MEDIA_TYPE,
                 "Content type is not supported",
+                request.getRequestURI(),
+                Map.of()
+        );
+    }
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ErrorResponseDto> handleAuthenticationException(
+            InvalidCredentialsException exception,
+            HttpServletRequest request
+    ) {
+        return buildResponse(
+                HttpStatus.UNAUTHORIZED,
+                ErrorCode.AUTHENTICATION_FAILED,
+                "Invalid username or password",
                 request.getRequestURI(),
                 Map.of()
         );

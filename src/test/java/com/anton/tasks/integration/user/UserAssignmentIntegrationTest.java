@@ -18,6 +18,7 @@ import java.nio.charset.StandardCharsets;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -44,7 +45,7 @@ public class UserAssignmentIntegrationTest extends IntegrationTest {
 
         String formattedPath = String.format("/tasks/%d/assign/%s", taskId, username);
 
-        mockMvc.perform(put(formattedPath))
+        mockMvc.perform(put(formattedPath).with(jwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(taskId))
                 .andExpect(jsonPath("$.assignee").value(username));
@@ -62,7 +63,7 @@ public class UserAssignmentIntegrationTest extends IntegrationTest {
 
         String formattedPath = String.format("/tasks/%d/assign/%s", taskId, "username");
 
-        MvcResult mvcResult = mockMvc.perform(put(formattedPath))
+        MvcResult mvcResult = mockMvc.perform(put(formattedPath).with(jwt()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
                 .andExpect(jsonPath("$.code").value(ErrorCode.USER_NOT_FOUND.name()))
@@ -88,7 +89,7 @@ public class UserAssignmentIntegrationTest extends IntegrationTest {
 
         String formattedPath = String.format("/tasks/%d/assign/%s", -1, username);
 
-        MvcResult mvcResult = mockMvc.perform(put(formattedPath))
+        MvcResult mvcResult = mockMvc.perform(put(formattedPath).with(jwt()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
                 .andExpect(jsonPath("$.code").value(ErrorCode.TASK_NOT_FOUND.name()))
@@ -111,7 +112,7 @@ public class UserAssignmentIntegrationTest extends IntegrationTest {
 
         String formattedPath = String.format("/tasks/%d/assign/%s", -1, "test");
 
-        MvcResult mvcResult = mockMvc.perform(put(formattedPath))
+        MvcResult mvcResult = mockMvc.perform(put(formattedPath).with(jwt()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
                 .andExpect(jsonPath("$.code").value(ErrorCode.TASK_NOT_FOUND.name()))
@@ -141,7 +142,7 @@ public class UserAssignmentIntegrationTest extends IntegrationTest {
         });
 
         String formattedPath = String.format("/tasks/%d/assign/%s", taskId, username);
-        mockMvc.perform(put(formattedPath))
+        mockMvc.perform(put(formattedPath).with(jwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(taskId))
                 .andExpect(jsonPath("$.assignee").value(username));
@@ -153,13 +154,15 @@ public class UserAssignmentIntegrationTest extends IntegrationTest {
     }
 
     private String createUser(String username) throws Exception {
+        String userPassword = "test-password";
         String createUserRequest = """
                 {
-                  "username": "%s"
+                  "username": "%s",
+                  "password": "%s"
                 }
-                """.formatted(username);
+                """.formatted(username, userPassword);
 
-        MvcResult userMvcResult = mockMvc.perform(post("/users")
+        MvcResult userMvcResult = mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(createUserRequest))
                 .andExpect(status().isCreated())
@@ -177,7 +180,7 @@ public class UserAssignmentIntegrationTest extends IntegrationTest {
                 }
                 """.formatted(title);
 
-        MvcResult taskMvcResult = mockMvc.perform(post("/tasks")
+        MvcResult taskMvcResult = mockMvc.perform(post("/tasks").with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(createTaskRequest))
                 .andExpect(status().isCreated())

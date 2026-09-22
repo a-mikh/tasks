@@ -14,6 +14,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import java.nio.charset.StandardCharsets;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -35,7 +36,7 @@ public class TaskCreationIntegrationTest extends IntegrationTest {
                 }
                 """.formatted(title);
 
-        MvcResult mvcResult = mockMvc.perform(post("/tasks")
+        MvcResult mvcResult = mockMvc.perform(post("/tasks").with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(userRequest))
                 .andExpect(status().isCreated())
@@ -71,7 +72,7 @@ public class TaskCreationIntegrationTest extends IntegrationTest {
                 }
                 """.formatted(title, description);
 
-        MvcResult mvcResult = mockMvc.perform(post("/tasks")
+        MvcResult mvcResult = mockMvc.perform(post("/tasks").with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(userRequest))
                 .andExpect(status().isCreated())
@@ -98,7 +99,7 @@ public class TaskCreationIntegrationTest extends IntegrationTest {
 
     @Test
     void shouldReturn400ForEmptyJSON() throws Exception {
-        mockMvc.perform(post("/tasks")
+        mockMvc.perform(post("/tasks").with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isBadRequest())
@@ -119,7 +120,7 @@ public class TaskCreationIntegrationTest extends IntegrationTest {
                 }
                 """;
 
-        mockMvc.perform(post("/tasks")
+        mockMvc.perform(post("/tasks").with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(userRequest))
                 .andExpect(status().isBadRequest())
@@ -142,7 +143,7 @@ public class TaskCreationIntegrationTest extends IntegrationTest {
                 }
                 """.formatted(title);
 
-        MvcResult mvcResult = mockMvc.perform(post("/tasks")
+        MvcResult mvcResult = mockMvc.perform(post("/tasks").with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(userRequest))
                 .andExpect(status().isCreated())
@@ -176,7 +177,7 @@ public class TaskCreationIntegrationTest extends IntegrationTest {
                 }
                 """.formatted(title);
 
-        mockMvc.perform(post("/tasks")
+        mockMvc.perform(post("/tasks").with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isBadRequest())
@@ -199,7 +200,7 @@ public class TaskCreationIntegrationTest extends IntegrationTest {
                 }
                 """.formatted(title, description);
 
-        mockMvc.perform(post("/tasks")
+        mockMvc.perform(post("/tasks").with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isBadRequest())

@@ -16,10 +16,6 @@ public class UserEntity {
     protected UserEntity() {
     }
 
-    public UserEntity(String userName) {
-        this.username = userName;
-    }
-
     public UserEntity(String username, String passwordHash) {
         this.username = username;
         this.passwordHash = passwordHash;

@@ -23,6 +23,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -44,6 +45,11 @@ public class TaskRetrievalIntegrationTest extends IntegrationTest {
     private ObjectMapper objectMapper;
 
     @Test
+    void shouldReturn401ForUnauthorizedUser() throws Exception {
+        mockMvc.perform(get("/tasks")).andExpect(status().isUnauthorized());
+    }
+
+    @Test
     void shouldReturnAllTasks() throws Exception {
         String task1Title = "Task1";
         String task2Title = "Task2";
@@ -54,7 +60,8 @@ public class TaskRetrievalIntegrationTest extends IntegrationTest {
         createTask(task2Title);
         assertThat(taskRepository.count()).isEqualTo(2);
 
-        MvcResult mvcResult = mockMvc.perform(get("/tasks"))
+        MvcResult mvcResult = mockMvc.perform(get("/tasks")
+                        .with(jwt()))
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -86,7 +93,8 @@ public class TaskRetrievalIntegrationTest extends IntegrationTest {
     void shouldReturnEmptyListWhenNoTasks() throws Exception {
         assertThat(taskRepository.count()).isEqualTo(0);
 
-        MvcResult mvcResult = mockMvc.perform(get("/tasks"))
+        MvcResult mvcResult = mockMvc.perform(get("/tasks")
+                        .with(jwt()))
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -118,13 +126,13 @@ public class TaskRetrievalIntegrationTest extends IntegrationTest {
 
         String path = String.format("/tasks/%d/assign/%s", taskId, username);
 
-        mockMvc.perform(put(path))
+        mockMvc.perform(put(path).with(jwt()))
                 .andExpect(status().isOk());
 
         assertThat(taskRepository.findById(taskId).isPresent()).isTrue();
         assertThat(taskRepository.findById(taskId).get().getAssignedUser().getUsername()).isEqualTo(username);
 
-        mockMvc.perform(get(String.format("/tasks?assignee=%s", username)))
+        mockMvc.perform(get(String.format("/tasks?assignee=%s", username)).with(jwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
                 .andExpect(jsonPath("$.content[0].id").value(taskId));
@@ -132,7 +140,7 @@ public class TaskRetrievalIntegrationTest extends IntegrationTest {
 
     @Test
     void shouldThrowExceptionWhenStatusIsInvalid() throws Exception {
-        mockMvc.perform(get("/tasks?status=invalid"))
+        mockMvc.perform(get("/tasks?status=invalid").with(jwt()))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.code").value(ErrorCode.VALIDATION_ERROR.name()))
@@ -160,14 +168,14 @@ public class TaskRetrievalIntegrationTest extends IntegrationTest {
         assertThat(userRepository.count()).isEqualTo(2);
 
         String path = String.format("/tasks/%d/assign/%s", taskId1, username1);
-        mockMvc.perform(put(path))
+        mockMvc.perform(put(path).with(jwt()))
                 .andExpect(status().isOk());
 
         path = String.format("/tasks/%d/assign/%s", taskId2, username2);
-        mockMvc.perform(put(path))
+        mockMvc.perform(put(path).with(jwt()))
                 .andExpect(status().isOk());
 
-        mockMvc.perform(get(String.format("/tasks?status=%s&assignee=%s", TaskStatus.TODO, username2)))
+        mockMvc.perform(get(String.format("/tasks?status=%s&assignee=%s", TaskStatus.TODO, username2)).with(jwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
                 .andExpect(jsonPath("$.content[0].id").value(taskId2));
@@ -179,7 +187,7 @@ public class TaskRetrievalIntegrationTest extends IntegrationTest {
         createTask("test-title2");
         createTask("test-title3");
 
-        mockMvc.perform(get("/tasks?page=0&size=2"))
+        mockMvc.perform(get("/tasks?page=0&size=2").with(jwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
                 .andExpect(jsonPath("$.totalElements").value(3))
@@ -190,7 +198,7 @@ public class TaskRetrievalIntegrationTest extends IntegrationTest {
                 .andExpect(jsonPath("$.first").value(true))
                 .andExpect(jsonPath("$.last").value(false));
 
-        mockMvc.perform(get("/tasks?page=1&size=2"))
+        mockMvc.perform(get("/tasks?page=1&size=2").with(jwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
                 .andExpect(jsonPath("$.totalElements").value(3))
@@ -216,7 +224,7 @@ public class TaskRetrievalIntegrationTest extends IntegrationTest {
         String responseJson3 = mvcResult3.getResponse().getContentAsString(StandardCharsets.UTF_8);
         Long taskId3 = JsonPath.parse(responseJson3).read("$.id", Long.class);
 
-        mockMvc.perform(get("/tasks?page=0&size=3&sort=id,desc"))
+        mockMvc.perform(get("/tasks?page=0&size=3&sort=id,desc").with(jwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
                 .andExpect(jsonPath("$.content[0].id").value(taskId1))
@@ -230,7 +238,7 @@ public class TaskRetrievalIntegrationTest extends IntegrationTest {
         String responseJson = mvcResult.getResponse().getContentAsString(StandardCharsets.UTF_8);
         Long taskId = JsonPath.parse(responseJson).read("$.id", Long.class);
 
-        mockMvc.perform(get("/tasks/" + taskId))
+        mockMvc.perform(get("/tasks/" + taskId).with(jwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(taskId))
                 .andExpect(jsonPath("$.title").value("test-title"))
@@ -241,7 +249,7 @@ public class TaskRetrievalIntegrationTest extends IntegrationTest {
 
     @Test
     void shouldReturn404WhenTaskByIdNotFound() throws Exception {
-        MvcResult mvcResult = mockMvc.perform(get("/tasks/-999"))
+        MvcResult mvcResult = mockMvc.perform(get("/tasks/-999").with(jwt()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
                 .andExpect(jsonPath("$.code").value(ErrorCode.TASK_NOT_FOUND.name()))
@@ -263,6 +271,7 @@ public class TaskRetrievalIntegrationTest extends IntegrationTest {
                 """.formatted(title);
 
         return mockMvc.perform(post("/tasks")
+                        .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(task1Request))
                 .andExpect(status().isCreated())
@@ -270,13 +279,15 @@ public class TaskRetrievalIntegrationTest extends IntegrationTest {
     }
 
     private String createUser(String username) throws Exception {
+        String userPassword = "test-password";
         String createUserRequest = """
                 {
-                  "username": "%s"
+                  "username": "%s",
+                  "password": "%s"
                 }
-                """.formatted(username);
+                """.formatted(username, userPassword);
 
-        MvcResult userMvcResult = mockMvc.perform(post("/users")
+        MvcResult userMvcResult = mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(createUserRequest))
                 .andExpect(status().isCreated())
