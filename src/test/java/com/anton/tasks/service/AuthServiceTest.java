@@ -12,6 +12,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 
 import java.sql.SQLException;
+import java.time.Duration;
 
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -32,7 +33,7 @@ public class AuthServiceTest {
         userRepository = mock(UserRepository.class);
         passwordEncoder = mock(PasswordEncoder.class);
         jwtEncoder = mock(JwtEncoder.class);
-        authService = new AuthService(userRepository, passwordEncoder, jwtEncoder);
+        authService = new AuthService(userRepository, passwordEncoder, jwtEncoder, Duration.ofMinutes(15));
     }
 
     @Test

@@ -13,10 +13,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.time.Duration;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -165,15 +167,15 @@ public class AuthIntegrationTest extends IntegrationTest {
         String username = "test-user";
         String password = "test-password";
         String userRequest = """
-               {
-                 "username": "%s",
-                 "password": "%s"
-               }
-               """.formatted(username, password);
+                {
+                  "username": "%s",
+                  "password": "%s"
+                }
+                """.formatted(username, password);
 
         MvcResult registrationResult = mockMvc.perform(post("/auth/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(userRequest))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(userRequest))
                 .andExpect(status().isCreated())
                 .andReturn();
 
@@ -181,8 +183,8 @@ public class AuthIntegrationTest extends IntegrationTest {
         Integer userId = JsonPath.read(registrationResponseJson, "$.id");
 
         MvcResult loginResult = mockMvc.perform(post("/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(userRequest))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(userRequest))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").isNotEmpty())
                 .andExpect(jsonPath("$.tokenType").value("Bearer"))
@@ -191,9 +193,12 @@ public class AuthIntegrationTest extends IntegrationTest {
 
         String loginResponseJson = loginResult.getResponse().getContentAsString();
         String accessToken = JsonPath.read(loginResponseJson, "$.accessToken");
-        String subject = jwtDecoder.decode(accessToken).getSubject();
+        Jwt decodedJwt = jwtDecoder.decode(accessToken);
+        String subject = decodedJwt.getSubject();
 
         assertThat(subject).isEqualTo(String.valueOf(userId));
+        assertThat(Duration.between(decodedJwt.getIssuedAt(), decodedJwt.getExpiresAt()))
+                .isEqualTo(Duration.ofMinutes(15));
 
         mockMvc.perform(get("/tasks")
                         .header("Authorization", "Bearer " + accessToken))
@@ -205,15 +210,15 @@ public class AuthIntegrationTest extends IntegrationTest {
         String username = "test-user";
         String password = "test-password";
         String userRequest = """
-               {
-                 "username": "%s",
-                 "password": "%s"
-               }
-               """.formatted(username, password);
+                {
+                  "username": "%s",
+                  "password": "%s"
+                }
+                """.formatted(username, password);
 
         mockMvc.perform(post("/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(userRequest))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(userRequest))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.status").value(401))
                 .andExpect(jsonPath("$.code").value(ErrorCode.AUTHENTICATION_FAILED.name()))
@@ -226,11 +231,11 @@ public class AuthIntegrationTest extends IntegrationTest {
         String username = "test-user";
         String password = "test-password";
         String userRequest = """
-               {
-                 "username": "%s",
-                 "password": "%s"
-               }
-               """.formatted(username, password);
+                {
+                  "username": "%s",
+                  "password": "%s"
+                }
+                """.formatted(username, password);
 
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -238,11 +243,11 @@ public class AuthIntegrationTest extends IntegrationTest {
                 .andExpect(status().isCreated());
 
         userRequest = """
-               {
-                 "username": "%s",
-                 "password": "%s"
-               }
-               """.formatted(username, "wrong-password");
+                {
+                  "username": "%s",
+                  "password": "%s"
+                }
+                """.formatted(username, "wrong-password");
 
         mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
