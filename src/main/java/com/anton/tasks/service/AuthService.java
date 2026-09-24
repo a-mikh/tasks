@@ -9,6 +9,7 @@ import com.anton.tasks.exceptions.user.UserAlreadyExistsException;
 import com.anton.tasks.model.UserEntity;
 import com.anton.tasks.repository.UserRepository;
 import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
@@ -18,6 +19,7 @@ import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
@@ -28,11 +30,17 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtEncoder jwtEncoder;
+    private final Duration accessTokenTtl;
 
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtEncoder jwtEncoder) {
+    public AuthService(
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder,
+            JwtEncoder jwtEncoder,
+            @Value("${app.jwt.access-token-ttl}") Duration accessTokenTtl) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtEncoder = jwtEncoder;
+        this.accessTokenTtl = accessTokenTtl;
     }
 
     public UserRegisterResponseDto registerUser(UserRegisterRequestDto dto) {
@@ -69,7 +77,7 @@ public class AuthService {
         UserEntity user = userRepository.findByUsername(dto.username())
                 .orElseThrow(InvalidCredentialsException::new);
 
-        if (user.getPasswordHash() == null ||  !passwordEncoder.matches(dto.password(), user.getPasswordHash())) {
+        if (user.getPasswordHash() == null || !passwordEncoder.matches(dto.password(), user.getPasswordHash())) {
             throw new InvalidCredentialsException();
         }
 
@@ -78,8 +86,7 @@ public class AuthService {
 
     private UserLoginResponseDto getJwtToken(Long userId) {
         Instant now = Instant.now();
-        long expiresInSeconds = 900; // 15 mins
-        Instant expiresAt = now.plusSeconds(expiresInSeconds);
+        Instant expiresAt = now.plus(accessTokenTtl);
 
         JwtClaimsSet claims = JwtClaimsSet.builder()
                 .subject(String.valueOf(userId))
@@ -93,6 +100,6 @@ public class AuthService {
         JwtEncoderParameters parameters = JwtEncoderParameters.from(header, claims);
         String tokenValue = jwtEncoder.encode(parameters).getTokenValue();
 
-        return new UserLoginResponseDto(tokenValue, expiresInSeconds);
+        return new UserLoginResponseDto(tokenValue, accessTokenTtl.toSeconds());
     }
 }
